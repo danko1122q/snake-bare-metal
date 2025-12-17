@@ -8,12 +8,11 @@
 ; provided the original copyright notice and license are preserved.
 ;
 ; Description:
-; A tiny Snake game that runs directly on BIOS (real mode),
+; A tiny Snake game that runs directly on BIOS,
 ; without an OS, filesystem, or external libraries.
 ; Keyboard input via INT 16h, video via INT 10h.
 ;
 ; Controls:
-
 ;   W A S D - Move snake
 ;   R       - Restart after game over
 ; ============================================================
@@ -22,29 +21,34 @@
     ; INITIAL SETUP
     ; --------------------------
 	mov	ax, 0x07C0
-	mov	ds, ax              
+	mov	ds, ax              ; DS points to boot sector location
+
 	mov	ah, 0x01
 	mov	cx, 0x2000
-	int 	0x10              
+	int 	0x10              ; disable blinking cursor on screen
+
 	mov	ax, 0x0305
 	mov	bx, 0x031F
-	int	0x16              
+	int	0x16              ; adjust keyboard repeat rate (slower)
 
 ; =========================
 ; MAIN GAME LOOP
 ; =========================
 game_loop:
-	call	clear_screen       
-	push	word [snake_pos]   
+	call	clear_screen       ; clear screen each frame for redraw
+
+	push	word [snake_pos]   ; save current head position (for updating body)
+
 	mov	ah, 0x01
-	int	0x16              
-	jz	done_clear         
+	int	0x16              ; check if a key is pressed
+	jz	done_clear         ; if no key pressed, use last direction
+
 	mov	ah, 0x00
-	int	0x16              
+	int	0x16              ; read key from keyboard buffer
 	jmp	update_snakepos
 
 done_clear:
-	mov	al, [last_move]    
+	mov	al, [last_move]    ; fallback to previous direction if no key pressed
 
 ; -------------------------
 ; UPDATE SNAKE POSITION
@@ -52,8 +56,8 @@ done_clear:
 update_snakepos:
 	cmp	al, 0x1b           ; check if ESC pressed
 	jne	no_exit
-	int	0x19              ; REPAIR: Use int 0x19 (reboot/disk load) instead of int 0x20
-	
+	int	0x20              ; terminate program if ESC
+
 no_exit:
 	cmp	al, 'a'
 	je	left
@@ -65,62 +69,64 @@ no_exit:
 	jne	done_clear
 
 up:
-	dec	byte [snake_y_pos] 
+	dec	byte [snake_y_pos] ; move up (decrease Y)
 	jmp	move_done
 
 left:
-	dec	byte [snake_x_pos] 
+	dec	byte [snake_x_pos] ; move left (decrease X)
 	jmp	move_done
 
 right:
-	inc	byte [snake_x_pos] 
+	inc	byte [snake_x_pos] ; move right (increase X)
 	jmp	move_done
 
 down:
-	inc	byte [snake_y_pos] 
+	inc	byte [snake_y_pos] ; move down (increase Y)
 
 move_done:
-	mov	[last_move], al    
+	mov	[last_move], al    ; save current move for next iteration
 
 ; -------------------------
 ; UPDATE SNAKE BODY
 ; -------------------------
 	mov	si, snake_body_pos
-	pop	ax                 
+	pop	ax                 ; previous head position
+
 update_body:
-	mov	bx, [si]            
+	mov	bx, [si]            ; read next body segment
 	test	bx, bx
-	jz	done_update         
-	mov	[si], ax            
-	add	si, 2               
-	mov	ax, bx             
+	jz	done_update         ; if zero, end of snake body
+	mov	[si], ax            ; shift previous position to current segment
+	add	si, 2               ; move to next segment
+	mov	ax, bx             ; next iteration: current becomes previous
 	jmp	update_body
 
 done_update:
 	cmp	byte [grow_snake_flag], 1
-	jne	add_zero_snake      
-	mov	word [si], ax        
+	jne	add_zero_snake      ; if no growth, append zero at end
+
+	mov	word [si], ax        ; grow snake by adding new head position
 	mov	byte [grow_snake_flag], 0
 	add	si, 2
 
 add_zero_snake:
-	mov	word [si], 0x0000    
+	mov	word [si], 0x0000    ; mark end of snake body
 
 ; =========================
 ; DRAW EVERYTHING
 ; =========================
 print_stuff:
 	; --- Move cursor to center top for score ---
-	mov	dh, 0x00       
-	mov	dl, 0x20       
-	mov	dx, dx         
+	mov	dh, 0x00       ; row 0 (top)
+	mov	dl, 0x20       ; column 32 (roughly center)
+	mov	dx, dx         ; combine DH/DL into DX
 	call	move_cursor
 
 	mov	si, score_msg
-	call	print_string     
+	call	print_string     ; print score message
 
 	mov	ax, [score]
-	call	print_int        
+	call	print_int        ; print numeric score
 
 	; draw food
 	mov	dx, [food_pos]
@@ -140,7 +146,7 @@ print_stuff:
 snake_body_print_loop:
 	lodsw
 	test	ax, ax
-	jz	check_collisions   
+	jz	check_collisions   ; if zero, end of body
 	mov	dx, ax
 	call	move_cursor
 	mov	al, 'o'
@@ -181,25 +187,25 @@ no_collision:
 	cmp	ax, [food_pos]
 	jne	game_loop_continued
 
-	inc	word [score]       
+	inc	word [score]       ; increase score
 
 	mov	bx, 24
-	call	rand              
+	call	rand              ; generate new Y for food
 	push	dx
 
 	mov	bx, 78
-	call	rand              
+	call	rand              ; generate new X for food
 	pop	cx
 
 	mov	dh, cl
-	mov	[food_pos], dx     
-	mov	byte [grow_snake_flag], 1 
+	mov	[food_pos], dx     ; store new food position
+	mov	byte [grow_snake_flag], 1 ; grow snake on next update
 
 game_loop_continued:
 	mov	cx, 0x0002
 	mov	dx, 0x49F0
 	mov	ah, 0x86
-	int	0x15                  
+	int	0x15                  ; small delay
 	jmp	game_loop
 
 ; =========================
@@ -239,7 +245,7 @@ wait_for_r:
 ; =========================
 clear_screen:
 	mov	ax, 0x0700
-	mov	bh, 0x0A           
+	mov	bh, 0x0A           ; background color attribute
 	xor	cx, cx
 	mov	dx, 0x1950
 	int	0x10
@@ -253,16 +259,13 @@ move_cursor:
 	int 	0x10
 	ret
 
+print_string_loop:
+	call	print_char
+
 print_string:
 	lodsb
-print_string_loop:
 	test	al, al
-	jz	print_done
-	call	print_char
-	lodsb
-	jmp	print_string_loop
-print_done:
-	ret
+	jns	print_string_loop
 
 print_char:
 	and	al, 0x7F
@@ -296,7 +299,7 @@ pop_and_print_digits:
 ; =========================
 rand:
 	mov	ah, 0x00
-	int	0x1A               
+	int	0x1A               ; get system timer
 	mov	ax, dx
 	xor	dx, dx
 	div	bx
@@ -305,14 +308,12 @@ rand:
 
 ; =========================
 ; TEXT DATA (7-bit encoded)
-; String sekarang diakhiri dengan NUL (0x00)
 ; =========================
-retry_msg DB '! PRESS "r" TO RETRY', 0x00
-hit_msg   DB 'YOU HIT ', 0x00
-self_msg  DB 'YOURSELF!', 0x00
-wall_msg  DB 'THE WALL!', 0x00
-score_msg DB 'V1.0.0 SCORE:', 0x00
-
+retry_msg db '! press r to retr', 0xF9
+hit_msg   db 'You hit', 0xA0
+self_msg  db 'yoursel', 0xE6
+wall_msg  db 'the wal', 0xEC
+score_msg db 'v1.0.0 Score:', 0xA0
 
 ; =========================
 ; GAME STATE VARIABLES
