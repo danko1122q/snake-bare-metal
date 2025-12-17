@@ -311,7 +311,7 @@ retry_msg DB '! PRESS "r" TO RETRY', 0x00
 hit_msg   DB 'YOU HIT ', 0x00
 self_msg  DB 'YOURSELF!', 0x00
 wall_msg  DB 'THE WALL!', 0x00
-score_msg DB 'V1.0.0 SCORE:', 0x00
+score_msg DB 'V1.0.1 SCORE:', 0x00
 
 
 ; =========================
@@ -319,7 +319,7 @@ score_msg DB 'V1.0.0 SCORE:', 0x00
 ; =========================
 grow_snake_flag db 0
 food_pos dw 0x0D0D
-score dw 1
+score dw 0
 last_move db 'd'
 
 snake_pos:
