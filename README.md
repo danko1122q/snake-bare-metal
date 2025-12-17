@@ -94,7 +94,6 @@ The menu has a **10-second timeout** before automatically booting the default op
 * **S** — Move Down
 * **D** — Move Right
 * **R** — Restart after game over
-* **ESC** — Exit
 
 ---
 
@@ -193,8 +192,8 @@ Make sure the QEMU window has focus. Click on the window before pressing keys.
 
 ## License
 
-This project is provided as-is for educational purposes.  
-Feel free to modify and use it as you wish.
+This project is provided for learning and experimentation.
+You are welcome to modify, enhance, and redistribute it, as long as the original copyright and attribution are preserved.
 
 ---
 
@@ -207,15 +206,5 @@ Feel free to modify and use it as you wish.
 
 ---
 
-## Future Improvements
-
-- [ ] Add score display
-- [ ] Increase game speed as score increases
-- [ ] Add sound effects (PC speaker beeps)
-- [ ] Support for arrow keys
-- [ ] Color customization
-- [ ] Multiple difficulty levels
-
----
 
 **Enjoy the game! 🐍**
