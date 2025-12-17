@@ -119,7 +119,7 @@ print_stuff:
 
 	mov	dx, [food_pos]
 	call	move_cursor
-	mov	al, '*'
+	mov	al, 'X'
 	call	print_char
 
 	mov	dx, [snake_pos]
