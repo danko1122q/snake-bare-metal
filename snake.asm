@@ -106,7 +106,7 @@ add_zero_snake:
 print_stuff:
 	; --- START MODIFICATION for CENTER TOP ---
 	mov	dh, 0x00       ; DH = Baris 0 (Paling atas)
-	mov	dl, 0x23       ; DL = Kolom 35 (0x23 dalam Hex) -> Tengah
+	mov	dl, 0x20       ; DL = Kolom 35 (0x23 dalam Hex) -> Tengah
 	mov	dx, dx         ; Gabungkan DH dan DL ke DX
 	call	move_cursor    ; Pindahkan kursor ke (Baris 0, Kolom 35)
 	; --- END MODIFICATION ---
@@ -119,7 +119,7 @@ print_stuff:
 
 	mov	dx, [food_pos]
 	call	move_cursor
-	mov	al, 'X'
+	mov	al, 'O'
 	call	print_char
 
 	mov	dx, [snake_pos]
@@ -298,7 +298,7 @@ retry_msg db '! press r to retr', 0xF9
 hit_msg   db 'You hit', 0xA0
 self_msg  db 'yoursel', 0xE6
 wall_msg  db 'the wal', 0xEC
-score_msg db 'Score:', 0xA0
+score_msg db 'v1.0.0 Score:', 0xA0
 
 ; =========================
 ; GAME STATE
