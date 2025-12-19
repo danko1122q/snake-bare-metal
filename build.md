@@ -1,20 +1,20 @@
-# Snake Game dengan GRUB Boot Menu
+# Snake Game with GRUB Boot Menu
 
-Proyek ini berisi game Snake yang berjalan langsung di bare metal (tanpa OS) dengan boot menu GRUB.
+This project contains a Snake game that runs directly on bare metal (without OS) with a GRUB boot menu.
 
-## Struktur File
+## File Structure
 
 ```
 .
-├── snake.asm       # Source code game Snake (512 byte)
-├── grub.cfg        # Konfigurasi GRUB boot menu
+├── snake.asm       # Snake game source code (512 bytes)
+├── grub.cfg        # GRUB boot menu configuration
 ├── Makefile        # Build script
-└── README.md       # File ini
+└── README.md       # This file
 ```
 
-## Prasyarat
+## Prerequisites
 
-Install tools berikut:
+Install the following tools:
 
 ### Ubuntu/Debian:
 ```bash
@@ -26,47 +26,48 @@ sudo apt-get install nasm qemu-system-x86 grub-pc-bin xorriso
 sudo pacman -S nasm qemu grub xorriso
 ```
 
-### macOS (dengan Homebrew):
+### macOS (with Homebrew):
 ```bash
 brew install nasm qemu grub xorriso
 ```
 
-## Cara Build
+## Build Instructions
 
-### 1. Build Binary Snake (512 byte)
+### 1. Build Snake Binary (512 bytes)
 ```bash
 make snake.bin
 ```
 
-### 2. Build RAW Image (untuk boot langsung)
+### 2. Build RAW Image (for direct boot)
 ```bash
 make img
 ```
 
-### 3. Build ISO dengan GRUB Menu
+### 3. Build ISO with GRUB Menu
 ```bash
 make iso
 ```
-atau langsung:
+
+or directly:
 ```bash
 make
 ```
 
-## Cara Menjalankan
+## Running the Game
 
-### Jalankan dari ISO (dengan GRUB menu):
+### Run from ISO (with GRUB menu):
 ```bash
 make run
 ```
 
-### Jalankan dari RAW image (tanpa menu):
+### Run from RAW image (without menu):
 ```bash
 make run-raw
 ```
 
-## Boot Menu GRUB
+## GRUB Boot Menu
 
-Saat menjalankan ISO, Anda akan melihat menu GRUB:
+When running the ISO, you will see the GRUB menu:
 
 ```
 ┌────────────────────────────────────┐
@@ -75,26 +76,26 @@ Saat menjalankan ISO, Anda akan melihat menu GRUB:
 └────────────────────────────────────┘
 ```
 
-Pilih "Snake Game - Play Now!" untuk bermain.
+Select "Snake Game - Play Now!" to play.
 
-## Kontrol Game
+## Game Controls
 
-- **W A S D** - Gerakkan ular
-- **R** - Restart setelah game over
-- **ESC** - Keluar dari program
+- **W A S D** - Move the snake
+- **R** - Restart after game over
+- **ESC** - Exit the program
 
-## Catatan Penting
+## Important Notes
 
-1. **snake.asm TIDAK DIUBAH** - File asli tetap 512 byte
-2. **GRUB hanya sebagai bootloader** - Menu GRUB akan mem-chainload snake.bin
-3. **ISO berisi**:
+1. **snake.asm IS NOT MODIFIED** - Original file remains 512 bytes
+2. **GRUB is only a bootloader** - GRUB menu will chainload snake.bin
+3. **ISO contains**:
    - GRUB bootloader (~2MB)
-   - snake.bin (512 byte)
-   - grub.cfg (konfigurasi menu)
+   - snake.bin (512 bytes)
+   - grub.cfg (menu configuration)
 
-## Testing di Hardware Real
+## Testing on Real Hardware
 
-Untuk burn ke USB dan boot di komputer fisik:
+To burn to USB and boot on physical computer:
 
 ```bash
 # Linux
@@ -104,18 +105,18 @@ sudo dd if=snake.iso of=/dev/sdX bs=4M status=progress
 sudo dd if=snake.iso of=/dev/diskX bs=4m
 ```
 
-⚠️ **HATI-HATI**: Pastikan `/dev/sdX` atau `/dev/diskX` adalah USB drive yang benar!
+⚠️ **WARNING**: Make sure `/dev/sdX` or `/dev/diskX` is the correct USB drive!
 
 ## Troubleshooting
 
 ### Error: grub-mkrescue not found
-Install `grub-pc-bin` (Ubuntu) atau `grub` (Arch/macOS)
+Install `grub-pc-bin` (Ubuntu) or `grub` (Arch/macOS)
 
 ### Error: Binary size is not 512 bytes
-Cek snake.asm, pastikan tidak ada modifikasi yang mengubah ukuran binary.
+Check snake.asm, ensure no modifications that change the binary size.
 
-### QEMU tidak bisa boot ISO
-Coba tambahkan flag `-boot d`:
+### QEMU cannot boot ISO
+Try adding the `-boot d` flag:
 ```bash
 qemu-system-i386 -boot d -cdrom snake.iso
 ```
@@ -126,8 +127,10 @@ qemu-system-i386 -boot d -cdrom snake.iso
 make clean
 ```
 
-Akan menghapus semua file hasil build (*.bin, *.img, *.iso, folder iso/)
+This will remove all build artifacts (*.bin, *.img, *.iso, iso/ folder)
 
-## Lisensi
+## License
 
 MIT License
+
+---
