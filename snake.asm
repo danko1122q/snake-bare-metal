@@ -1,40 +1,41 @@
+; ------------------------------------------------------------
+    ; Snake Game Boot Sector - FIXED VERSION
     ; ------------------------------------------------------------
-    ; Snake Game Boot Sector
-    ; ------------------------------------------------------------
-    ; Copyright (c) 2025 Davanico Ady Nugroho
-    
-    ; Licensed under the MIT License.
-    ; Description:
-    ; A tiny Snake game that runs directly on BIOS (real mode).
-    ; ------------------------------------------------------------
+    [ORG 0x7C00]
 
-    ; --------------------------
     ; INITIAL SETUP
-    ; --------------------------
-    mov ax, 0x07C0
+    xor ax, ax
     mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x7C00
+
     mov ah, 0x01
-    mov cx, 0x2000      ; Hide text cursor
+    mov cx, 0x2000      ; Sembunyikan kursor
     int 0x10
+    
     mov ax, 0x0305
-    mov bx, 0x031F      ; Set keyboard repeat rate
+    mov bx, 0x031F      ; Keyboard repeat rate
     int 0x16
+
+    mov word [SNAKE_BODY_PTR], 0x0000
 
 game_loop:
     call clear_screen
     push word [snake_pos]
+    
     mov  ah, 0x01
-    int  0x16           ; Check for keystroke
+    int  0x16           ; Cek input keyboard
     jz   done_clear
     mov  ah, 0x00
-    int  0x16           ; Get keystroke
+    int  0x16           ; Ambil tombol
     jmp  update_snakepos
 
 done_clear:
     mov al, [last_move]
 
 update_snakepos:
-    cmp al, 0x1b        ; ESC key to reboot
+    cmp al, 0x1b        ; ESC untuk reboot
     jne no_exit
     int 0x19
 
@@ -51,22 +52,19 @@ no_exit:
 up:
     dec byte [snake_y_pos]
     jmp move_done
-
 left:
     dec byte [snake_x_pos]
     jmp move_done
-
 right:
     inc byte [snake_x_pos]
     jmp move_done
-
 down:
     inc byte [snake_y_pos]
 
 move_done:
     mov [last_move], al
-    mov si, snake_body_pos
-    pop ax
+    mov si, SNAKE_BODY_PTR 
+    pop ax                 ; Koordinat kepala lama untuk update body
 
 update_body:
     mov  bx, [si]
@@ -88,52 +86,41 @@ add_zero_snake:
     mov word [si], 0x0000
 
 print_stuff:
-    ; Print Score Header
-    mov  dh, 0x00
-    mov  dl, 0x20
+    mov  dh, 0
+    mov  dl, 33
     call move_cursor
     mov  si, score_msg
     call print_string
     mov  ax, [score]
     call print_int
 
-    ; ------------------------------------------------------------
-    ; SPRITE RENDERING (Head & Food)
-    ; ------------------------------------------------------------
-    
     ; Render Food
     mov  dx, [food_pos]
     call move_cursor
-    mov  al, 0x05       ; SYMBOL: Leaf/Club (Food) - Extended ASCII
+    mov  al, 0x05        
     call print_char
 
     ; Render Snake Head
     mov  dx, [snake_pos]
     call move_cursor
-    mov  al, 0x02       ; SYMBOL: Smile (Snake Head)
+    mov  al, 0x02        
     call print_char
 
     ; Render Snake Body
-    mov  si, snake_body_pos
-
+    mov  si, SNAKE_BODY_PTR
 snake_body_print_loop:
     lodsw
     test ax, ax
     jz   check_collisions
     mov  dx, ax
     call move_cursor
-    mov  al, 'o'        ; SYMBOL: Snake Body segment
+    mov  al, 'o'
     call print_char
     jmp  snake_body_print_loop
 
-    ; ------------------------------------------------------------
-    ; LOGIC & COLLISIONS
-    ; ------------------------------------------------------------
-
 check_collisions:
     mov bx, [snake_pos]
-
-    ; Wall Collisions (Boundaries: 80x25)
+    ; Wall Collisions
     cmp bh, 25
     jge game_over_hit_wall
     cmp bh, 0
@@ -143,89 +130,74 @@ check_collisions:
     cmp bl, 0
     jl  game_over_hit_wall
 
-    mov si, snake_body_pos
-
+    ; Self Collision
+    mov si, SNAKE_BODY_PTR
 check_collisions_self:
     lodsw
-    cmp ax, bx
-    je  game_over_hit_self
-    or  ax, ax
-    jne check_collisions_self
+    test ax, ax
+    jz   no_collision
+    cmp  ax, bx
+    je   game_over_hit_self
+    jmp  check_collisions_self
 
 no_collision:
     mov ax, [snake_pos]
     cmp ax, [food_pos]
     jne game_loop_continued
 
-    ; Snake ate the food
     inc word [score]
-    mov  bx, 24         ; Random Y
+    mov  bx, 24
     call rand
-    push dx
-    mov  bx, 78         ; Random X
+    mov  cl, dl
+    mov  bx, 78
     call rand
-    pop  cx
-    mov dh, cl
-    mov [food_pos], dx
-    mov byte [grow_snake_flag], 1
+    mov  dh, cl
+    mov  [food_pos], dx
+    mov  byte [grow_snake_flag], 1
 
 game_loop_continued:
-    ; Game Speed Delay
     mov cx, 0x0002
     mov dx, 0x49F0
     mov ah, 0x86
     int 0x15
     jmp game_loop
 
-    ; -------------------------
-    ; GAME OVER SCREENS
-    ; -------------------------
-
 game_over_hit_self:
-    push self_msg
-    jmp  game_over
-
+    mov si, self_msg
+    jmp game_over
 game_over_hit_wall:
-    push wall_msg
+    mov si, wall_msg
 
 game_over:
     call clear_screen
-    
-    ; Center text logic (Row 12, Column 21)
-    mov  dh, 12           
-    mov  dl, 21           
+    mov  dh, 12
+    mov  dl, 21
     call move_cursor
-
     mov  si, hit_msg
     call print_string
-    pop  si
+    ; (si saat ini berisi self_msg atau wall_msg)
     call print_string
     mov  si, retry_msg
     call print_string
 
 wait_for_r:
-    mov ah, 0x00
+    xor ah, ah
     int 0x16
     cmp al, 'r'
     jne wait_for_r
-
-    ; Reset game state
+    ; Reset State
     mov word [snake_pos], 0x0F0F
-    mov word [snake_body_pos], 0
+    mov word [SNAKE_BODY_PTR], 0
     mov word [score], 0
     mov byte [last_move], 'd'
     jmp game_loop
 
-    ; -------------------------
-    ; VIDEO & UTILITY ROUTINES
-    ; -------------------------
-
 clear_screen:
-    mov  ax, 0x0700
-    mov  bh, 0x0A      ; Green text on Black background
-    xor  cx, cx
-    mov  dx, 0x194F
-    int  0x10
+    mov ax, 0x0700
+    mov bh, 0x0A
+    xor cx, cx
+    mov dx, 0x194F
+    int 0x10
     ret
 
 move_cursor:
@@ -236,69 +208,58 @@ move_cursor:
 
 print_string:
     lodsb
-print_string_loop:
     test al, al
-    jz   print_done
-    call print_char
-    lodsb
-    jmp  print_string_loop
-print_done:
-    ret
+    jz .done
+    mov ah, 0x0E
+    int 0x10
+    jmp print_string
+.done: ret
 
 print_char:
-    and al, 0x7F        ; Ensure ASCII 7-bit for compatibility
     mov ah, 0x0E
     int 0x10
     ret
 
 print_int:
-    push bp
-    mov  bp, sp
-push_digits:
-    xor  dx, dx
-    mov  bx, 10
-    div  bx
+    mov bx, 10
+    xor cx, cx
+.push_digits:
+    xor dx, dx
+    div bx
     push dx
+    inc cx
     test ax, ax
-    jnz  push_digits
-pop_and_print_digits:
-    pop  ax
-    add  al, '0'
+    jnz .push_digits
+.pop_digits:
+    pop ax
+    add al, '0'
     call print_char
-    cmp  sp, bp
-    jne  pop_and_print_digits
-    pop  bp
+    loop .pop_digits
     ret
 
 rand:
-    mov ah, 0x00
-    int 0x1A            ; Get system time
+    xor ah, ah
+    int 0x1A
     mov ax, dx
     xor dx, dx
     div bx
-    inc dx
     ret
 
-    ; -------------------------
-    ; DATA SECTION
-    ; -------------------------
-    retry_msg DB '!! PRESS "r" TO RETRY', 0x00
-    hit_msg   DB 'YOU HIT ', 0x00
-    self_msg  DB 'YOURSELF', 0x00
-    wall_msg  DB 'THE WALL', 0x00
-    score_msg DB 'V1.1.0 SCORE:', 0x00
-
-    grow_snake_flag db 0
-    food_pos dw 0x0D0D
-    score dw 0
-    last_move db 'd'
-
+; --- DATA ---
+retry_msg db '!! PRESS "r" TO RETRY', 0
+hit_msg   db 'YOU HIT ', 0
+self_msg  db 'YOURSELF', 0
+wall_msg  db 'THE WALL', 0
+score_msg db 'V1.1.0 SCORE:', 0
+grow_snake_flag db 0
+food_pos dw 0x0D0D
+score dw 0
+last_move db 'd'
 snake_pos:
     snake_x_pos db 0x0F
     snake_y_pos db 0x0F
 
-    snake_body_pos dw 0x0000
+SNAKE_BODY_PTR EQU 0x8000 
 
-    ; Bootsector signature
-    times 510-($-$$) db 0
-    dw 0xAA55
+times 510-($-$$) db 0
+dw 0xAA55
