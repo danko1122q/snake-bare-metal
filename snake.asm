@@ -275,7 +275,7 @@ retry_msg       db '!! PRESS "r" TO RETRY', 0
 hit_msg         db 'YOU HIT ', 0
 self_msg        db 'YOURSELF', 0
 wall_msg        db 'THE WALL', 0
-score_msg       db 'V1.1.0 SCORE:', 0
+score_msg       db 'V1.1.1 SCORE:', 0
 grow_snake_flag db 0
 food_pos        dw 0x0D0D
 score           dw 0
