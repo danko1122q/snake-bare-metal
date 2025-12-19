@@ -2,6 +2,13 @@
 
 This project contains a Snake game that runs directly on bare metal (without OS) with a GRUB boot menu.
 
+---
+![Demo1](docs/demo.png)
+---
+
+---
+![Demo2](docs/demo1.png)
+---
 ## File Structure
 
 ```
