@@ -5,7 +5,7 @@ The game is written entirely in **x86 Assembly (NASM)** and is booted using **GR
 
 ---
 ![Demo1](docs/demo.png)
-![Demo2](docs/demo1.png)
+![Demo2](docs/demo2.png)
 ---
 
 
