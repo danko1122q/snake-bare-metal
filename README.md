@@ -4,6 +4,10 @@ This project is a **Snake game** that runs directly on **bare metal** (no operat
 The game is written entirely in **x86 Assembly (NASM)** and is booted using **GRUB2** as the bootloader, which provides a simple menu for selecting game options.
 
 ---
+![Demo1](docs/demo.png)
+![Demo2](docs/demo1.png)
+---
+
 
 ## Project Structure
 
