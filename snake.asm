@@ -111,16 +111,16 @@ print_stuff:
     mov  ax, [score]
     call print_int
 
-    ; Draw Food (ASCII 05h: Club symbol)
+    ; Draw Food (ASCII 05h: * symbol)
     mov  dx, [food_pos]
     call move_cursor
-    mov  al, 0x05        
+    mov  al, '*' 		     ;food simbol
     call print_char
 
     ; Draw Snake Head (ASCII 02h: Smiley face)
     mov  dx, [snake_pos]
     call move_cursor
-    mov  al, 0x02        
+    mov  al, 0x40			;snake head
     call print_char
 
     ; Draw Snake Body Segments ('o')
